@@ -48,8 +48,30 @@ pub const Value = union(enum) {
     }
 
     pub fn asList(self: Value) !List {
-        if (self != .list) return error.TypeMismatch;
-        return self.list;
+        if (self == .list) {
+            return self.list;
+        } else if (self == .string) {
+            const str = self.string;
+            if (!(std.mem.startsWith(u8, self.string, "0x") and str.len % 2 == 0 and str.len > 2)) {
+                return error.TypeMismatch;
+            }
+            var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+            // defer arena.deinit();
+
+            var list = try arena.allocator().alloc(Value, str.len / 2 - 1);
+            // var list = std.ArrayList(Value).init(arena.allocator());
+            // defer list.deinit();
+            var i: usize = 2;
+            while (i < str.len) : (i += 2) {
+                if (i + 1 >= str.len) break;
+                const hex_str = str[i .. i + 2];
+                const num = std.fmt.parseInt(u8, hex_str, 16) catch continue;
+                list[i / 2 - 1] = Value{ .int = num };
+            }
+            return list;
+        } else {
+            return error.TypeMismatch;
+        }
     }
 
     pub fn asMap(self: Value) !Map {

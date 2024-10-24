@@ -308,3 +308,16 @@ test "multi lib tbd" {
         try testing.expect(lib.eql(expected[i]));
     }
 }
+
+test "fork" {
+    const Fork = struct {
+        previous_version: [4]u8,
+        current_version: [4]u8,
+        epoch: u64,
+    };
+    var parsed = try loadFromFile("test/value.txt");
+    defer parsed.deinit();
+    std.debug.print("{any}\n", .{parsed.docs.items});
+    const newFork = try parsed.parse(Fork);
+    std.debug.print("parsed {any}", .{newFork});
+}

@@ -381,6 +381,18 @@ const Parser = struct {
         node.base.start = self.token_it.pos;
 
         log.debug("(doc) begin {s}@{d}", .{ @tagName(self.tree.tokens[node.base.start].id), node.base.start });
+        // json format yaml
+        const is_one_line: bool = if (self.eatToken(.flow_map_start, &.{})) |doc_pos| is_one_line: {
+            if (self.getCol(doc_pos) > 0) return error.MalformedYaml;
+            if (self.eatToken(.tag, &.{ .new_line, .comment })) |_| {
+                node.directive = try self.expectToken(.literal, &.{ .new_line, .comment });
+            }
+            break :is_one_line true;
+        } else false;
+
+        if (is_one_line) {
+            return self.one_line_doc(node);
+        }
 
         // Parse header
         const explicit_doc: bool = if (self.eatToken(.doc_start, &.{})) |doc_pos| explicit_doc: {
@@ -413,6 +425,35 @@ const Parser = struct {
                 if (self.getCol(pos) > 0) return error.MalformedYaml;
                 self.token_it.seekBy(-1);
                 node.base.end = pos - 1;
+                break :footer;
+            }
+            if (self.eatToken(.eof, &.{})) |pos| {
+                node.base.end = pos - 1;
+                break :footer;
+            }
+            return error.UnexpectedToken;
+        }
+
+        log.debug("(doc) end {s}@{d}", .{ @tagName(self.tree.tokens[node.base.end].id), node.base.end });
+
+        return &node.base;
+    }
+
+    fn one_line_doc(self: *Parser, node: *Node.Doc) ParseError!*Node {
+        // Parse value
+        node.value = try self.value();
+        if (node.value == null) {
+            self.token_it.seekBy(-1);
+        }
+        errdefer if (node.value) |val| {
+            val.deinit(self.allocator);
+        };
+
+        // Parse footer
+        footer: {
+            if (self.eatToken(.flow_seq_end, &.{})) |pos| {
+                if (self.getCol(pos) > 0) return error.MalformedYaml;
+                node.base.end = pos;
                 break :footer;
             }
             if (self.eatToken(.eof, &.{})) |pos| {
@@ -464,7 +505,8 @@ const Parser = struct {
                 },
                 else => {
                     // TODO key not being a literal
-                    return error.Unhandled;
+                    // return error.Unhandled;
+                    continue;
                 },
             }
 
