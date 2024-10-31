@@ -317,7 +317,5 @@ test "fork" {
     };
     var parsed = try loadFromFile("test/value.txt");
     defer parsed.deinit();
-    std.debug.print("{any}\n", .{parsed.docs.items});
-    const newFork = try parsed.parse(Fork);
-    std.debug.print("parsed {any}", .{newFork});
+    _ = try parsed.parse(Fork);
 }
