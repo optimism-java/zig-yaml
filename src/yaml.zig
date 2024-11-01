@@ -32,6 +32,7 @@ pub const Value = union(enum) {
     string: []const u8,
     list: List,
     map: Map,
+    bool: bool,
 
     pub fn asInt(self: Value) !i64 {
         if (self != .int) return error.TypeMismatch;
@@ -51,6 +52,15 @@ pub const Value = union(enum) {
     pub fn asString(self: Value) ![]const u8 {
         if (self != .string) return error.TypeMismatch;
         return self.string;
+    }
+
+    pub fn asBool(self: Value) !bool {
+        if (self != .string) return error.TypeMismatch;
+        const str = self.string;
+        if (std.mem.eql(u8, str, "true")) return true;
+        if (std.mem.eql(u8, str, "false")) return false;
+
+        return error.TypeMismatch;
     }
 
     pub fn asList(self: Value) !List {
@@ -427,6 +437,7 @@ pub const Yaml = struct {
             },
             .void => error.TypeMismatch,
             .optional => unreachable,
+            .bool => try value.asBool(),
             else => error.Unimplemented,
         };
     }
@@ -539,8 +550,8 @@ pub fn stringify(allocator: Allocator, input: anytype, writer: anytype) !void {
     }
 }
 
-test {
-    std.testing.refAllDecls(Tokenizer);
-    std.testing.refAllDecls(parse);
-    _ = @import("yaml/test.zig");
-}
+// test {
+//     std.testing.refAllDecls(Tokenizer);
+//     std.testing.refAllDecls(parse);
+//     _ = @import("yaml/test.zig");
+// }

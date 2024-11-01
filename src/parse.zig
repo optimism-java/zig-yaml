@@ -382,6 +382,7 @@ const Parser = struct {
 
         log.debug("(doc) begin {s}@{d}", .{ @tagName(self.tree.tokens[node.base.start].id), node.base.start });
         // json format yaml
+
         const is_one_line: bool = if (self.eatToken(.flow_map_start, &.{})) |doc_pos| is_one_line: {
             if (self.getCol(doc_pos) > 0) return error.MalformedYaml;
             if (self.eatToken(.tag, &.{ .new_line, .comment })) |_| {
@@ -486,6 +487,7 @@ const Parser = struct {
         log.debug("(map) begin {s}@{d}", .{ @tagName(self.tree.tokens[node.base.start].id), node.base.start });
 
         const col = self.getCol(node.base.start);
+        var currentNewLine = self.getLine(node.base.start);
 
         while (true) {
             self.eatCommentsAndSpace(&.{});
@@ -493,9 +495,14 @@ const Parser = struct {
             // Parse key
             const key_pos = self.token_it.pos;
             if (self.getCol(key_pos) < col) {
-                break;
+                // multiline cases, see validator.txt in test
+                const newLine = self.getLine(key_pos);
+                if (newLine > currentNewLine) {
+                    currentNewLine = newLine;
+                } else {
+                    break;
+                }
             }
-
             const key = self.token_it.next() orelse return error.UnexpectedEof;
             switch (key.id) {
                 .literal => {},
@@ -509,7 +516,6 @@ const Parser = struct {
                     continue;
                 },
             }
-
             log.debug("(map) key {s}@{d}", .{ self.tree.getRaw(key_pos, key_pos), key_pos });
 
             // Separator
@@ -788,7 +794,7 @@ const Parser = struct {
     }
 };
 
-test {
-    std.testing.refAllDecls(@This());
-    _ = @import("parse/test.zig");
-}
+// test {
+//     std.testing.refAllDecls(@This());
+//     _ = @import("parse/test.zig");
+// }

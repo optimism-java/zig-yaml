@@ -319,3 +319,20 @@ test "fork" {
     defer parsed.deinit();
     _ = try parsed.parse(Fork);
 }
+
+test "validator" {
+    const Validator = struct {
+        pubkey: [48]u8,
+        withdrawal_credentials: [32]u8,
+        effective_balance: u64,
+        slashed: bool,
+        activation_eligibility_epoch: u64,
+        activation_epoch: u64,
+        exit_epoch: u64,
+        withdrawable_epoch: u64,
+    };
+    var parsed = try loadFromFile("test/validator.txt");
+    defer parsed.deinit();
+    const res = try parsed.parse(Validator);
+    std.debug.print("{any}\n", .{res});
+}
