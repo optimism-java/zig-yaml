@@ -336,3 +336,21 @@ test "validator" {
     const res = try parsed.parse(Validator);
     std.debug.print("{any}\n", .{res});
 }
+
+test "deposit" {
+    const DepositData = struct {
+        pubkey: [48]u8,
+        withdrawal_credentials: [32]u8,
+        amount: u64,
+        signature: [96]u8,
+    };
+    const Deposit = struct {
+        proof: [33][32]u8,
+        data: DepositData,
+    };
+
+    var parsed = try loadFromFile("test/deposit.txt");
+    defer parsed.deinit();
+    const res = try parsed.parse(Deposit);
+    std.debug.print("{any}\n", .{res});
+}

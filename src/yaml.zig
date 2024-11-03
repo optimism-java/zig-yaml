@@ -107,6 +107,7 @@ pub const Value = union(enum) {
             .uint => |uint| return writer.print("{}", .{uint}),
             .float => |float| return writer.print("{d}", .{float}),
             .string => |string| return writer.print("{s}", .{string}),
+            .bool => |data| return writer.print("{any}", .{data}),
             .list => |list| {
                 const len = list.len;
                 if (len == 0) return;
@@ -359,7 +360,6 @@ pub const Yaml = struct {
             const value = try Value.fromNode(arena.allocator(), &tree, node);
             docs.appendAssumeCapacity(value);
         }
-
         return Yaml{
             .arena = arena,
             .tree = tree,
@@ -550,8 +550,8 @@ pub fn stringify(allocator: Allocator, input: anytype, writer: anytype) !void {
     }
 }
 
-// test {
-//     std.testing.refAllDecls(Tokenizer);
-//     std.testing.refAllDecls(parse);
-//     _ = @import("yaml/test.zig");
-// }
+test {
+    std.testing.refAllDecls(Tokenizer);
+    std.testing.refAllDecls(parse);
+    _ = @import("yaml/test.zig");
+}

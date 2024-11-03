@@ -369,6 +369,10 @@ const Parser = struct {
                 self.token_it.seekBy(-1);
                 return self.list_bracketed();
             },
+            .flow_map_start => {
+                self.token_it.seekTo(pos + 1);
+                return try self.json_format_map();
+            },
             else => return null,
         }
     }
@@ -869,7 +873,7 @@ const Parser = struct {
     }
 };
 
-// test {
-//     std.testing.refAllDecls(@This());
-//     _ = @import("parse/test.zig");
-// }
+test {
+    std.testing.refAllDecls(@This());
+    _ = @import("parse/test.zig");
+}
