@@ -333,8 +333,7 @@ test "validator" {
     };
     var parsed = try loadFromFile("test/validator.txt");
     defer parsed.deinit();
-    const res = try parsed.parse(Validator);
-    std.debug.print("{any}\n", .{res});
+    _ = try parsed.parse(Validator);
 }
 
 test "deposit" {
@@ -351,6 +350,25 @@ test "deposit" {
 
     var parsed = try loadFromFile("test/deposit.txt");
     defer parsed.deinit();
-    const res = try parsed.parse(Deposit);
+    _ = try parsed.parse(Deposit);
+}
+
+test "AttestationData" {
+    const Checkpoint = struct {
+        epoch: u64,
+        root: [32]u8,
+    };
+    const AttestationData = struct {
+        slot: u64,
+        index: u64,
+        // LMD GHOST vote
+        beacon_block_root: [32]u8,
+        // FFG vote
+        source: Checkpoint,
+        target: Checkpoint,
+    };
+    var parsed = try loadFromFile("test/attestationData.txt");
+    defer parsed.deinit();
+    const res = try parsed.parse(AttestationData);
     std.debug.print("{any}\n", .{res});
 }
